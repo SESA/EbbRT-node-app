@@ -9,5 +9,6 @@ extern "C" int main(int argc, char **argv);
 
 void AppMain() {
   const char* argv[] = { "node" };
-  main(1, const_cast<char**>(argv));
+  auto i = main(1, const_cast<char**>(argv));
+  ebbrt::kprintf("Return Code: %d\n", i);
 }
