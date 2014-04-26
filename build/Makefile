@@ -1,4 +1,4 @@
-EBBRT_OPTFLAGS := -g3 -O0
+EBBRT_OPTFLAGS := -O4 -flto -DNDEBUG
 
 FILE_PATH := $(dir $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 
@@ -15,12 +15,12 @@ EBBRT_APP_OBJECTS := \
 
 EBBRT_APP_LINK := \
 -Wl,--start-group \
-$(NODE_PATH)/out/Debug/libchrome_zlib.a \
-$(NODE_PATH)/out/Debug/libhttp_parser.a \
-$(NODE_PATH)/out/Debug/libnode.a \
-$(NODE_PATH)/out/Debug/libuv.a \
-$(NODE_PATH)/out/Debug/libv8_base.a \
-$(NODE_PATH)/out/Debug/libv8_nosnapshot.a \
+$(NODE_PATH)/out/Release/libchrome_zlib.a \
+$(NODE_PATH)/out/Release/libhttp_parser.a \
+$(NODE_PATH)/out/Release/libnode.a \
+$(NODE_PATH)/out/Release/libuv.a \
+$(NODE_PATH)/out/Release/libv8_base.a \
+$(NODE_PATH)/out/Release/libv8_nosnapshot.a \
 -Wl,--end-group
 
 include ../../EbbRT/baremetal/build.mk
