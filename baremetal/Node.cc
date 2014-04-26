@@ -8,11 +8,16 @@
 
 #include <ebbrt/Debug.h>
 
+#include "../CmdLineArgs.h"
+#include "../StaticEbbIds.h"
+
 extern "C" int main(int argc, char **argv);
 
 void AppMain() {
   putenv(const_cast<char *>("TZ=EST5EDT4,M3.2.0,M11.1.0"));
-  const char *argv[] = { "node" };
-  auto i = main(1, const_cast<char **>(argv));
+  auto cmdlineargs = ebbrt::EbbRef<CmdLineArgs>(kCmdLineArgsId);
+  auto cmd_argc = cmdlineargs->argc();
+  auto cmd_argv = cmdlineargs->argv();
+  auto i = main(cmd_argc, cmd_argv);
   ebbrt::kprintf("Return Code: %d\n", i);
 }

@@ -2,11 +2,11 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
-#ifndef EBBRT_JS_CONFIG_H_
-#define APPS_HELLOWORLD_BAREMETAL_CONFIG_H_
+#ifndef STATICEBBIDS_H_
+#define STATICEBBIDS_H_
 
-#define __EBBRT_ENABLE_FDT__ 0
-#define __EBBRT_ENABLE_DISTRIBUTED_RUNTIME__ 0
-#define __EBBRT_ENABLE_NETWORKING__ 1
+#include <ebbrt/StaticIds.h>
 
-#endif  // EBBRT_JS_CONFIG_H_
+enum : ebbrt::EbbId { kCmdLineArgsId = ebbrt::kFirstStaticUserId };
+
+#endif  // STATICEBBIDS_H_
