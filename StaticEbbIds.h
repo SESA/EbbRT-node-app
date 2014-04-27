@@ -7,6 +7,9 @@
 
 #include <ebbrt/StaticIds.h>
 
-enum : ebbrt::EbbId { kCmdLineArgsId = ebbrt::kFirstStaticUserId };
+enum : ebbrt::EbbId {
+  kCmdLineArgsId = ebbrt::kFirstStaticUserId,
+  kFileSystemId
+};
 
-#endif  // STATICEBBIDS_H_
+#endif // STATICEBBIDS_H_

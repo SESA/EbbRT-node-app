@@ -2,6 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
+#ifndef CMDLINEARGS_H_
+#define CMDLINEARGS_H_
 
 #include <ebbrt/EbbAllocator.h>
 #include <ebbrt/Future.h>
@@ -22,3 +24,5 @@ private:
   std::vector<std::string> args_;
   std::vector<char *> argv_;
 };
+
+#endif  // CMDLINEARGS_H_

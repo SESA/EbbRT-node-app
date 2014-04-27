@@ -14,6 +14,7 @@
 #include <ebbrt/Runtime.h>
 
 #include "../CmdLineArgs.h"
+#include "../FileSystem.h"
 #include "../StaticEbbIds.h"
 
 int main(int argc, char **argv) {
@@ -31,7 +32,12 @@ int main(int argc, char **argv) {
     CmdLineArgs::Create(argc, argv, kCmdLineArgsId)
         .Then([bindir](ebbrt::Future<ebbrt::EbbRef<CmdLineArgs> > f) {
           f.Get();
-          ebbrt::node_allocator->AllocateNode(bindir.string());
+          // TODO(dschatz): Don't chain these futures, instead when_all them
+          FileSystem::CreateWithId(kFileSystemId)
+              .Then([bindir](ebbrt::Future<ebbrt::EbbRef<FileSystem> > f) {
+                f.Get();
+                ebbrt::node_allocator->AllocateNode(bindir.string());
+              });
         });
   }
   c.Run();

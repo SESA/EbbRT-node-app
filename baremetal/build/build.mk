@@ -3,16 +3,13 @@ MYDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 NODE_PATH := $(MYDIR)/../../node
 
 EBBRT_TARGET := node
-EBBRT_APP_CAPNPS := CmdLineArgs.capnp
-EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o
-#EBBRT_APP_DEPS := build-node
+EBBRT_APP_CAPNPS := CmdLineArgs.capnp FileSystem.capnp
+EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o FileSystem.o
+EBBRT_APP_DEPS := build-node
 EBBRT_APP_VPATH := $(abspath $(MYDIR)../):$(abspath $(MYDIR)../../)
 EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtcfg.h)
 
-#build-node:
-#	$(MAKE) -C $(NODE_PATH)/out BUILDTYPE=$(EBBRT_BUILDTYPE)
-
-#EBBRT_PHONY := build-node
+EBBRT_PHONY := build-node
 
 EBBRT_APP_LINK := \
 	-Wl,--start-group \
@@ -26,3 +23,6 @@ EBBRT_APP_LINK := \
 
 
 include $(abspath $(EBBRT_SRCDIR)/apps/ebbrtbaremetal.mk)
+
+build-node:
+	$(MAKE) -C $(NODE_PATH)/out BUILDTYPE=$(EBBRT_BUILDTYPE)

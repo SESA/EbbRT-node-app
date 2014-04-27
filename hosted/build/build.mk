@@ -2,10 +2,12 @@ MYDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 app_objects := \
 	Node.o \
-	CmdLineArgs.o
+	CmdLineArgs.o \
+	FileSystem.o
 
 app_capnps := \
-	CmdLineArgs.capnp 
+	CmdLineArgs.capnp \
+	FileSystem.capnp
 
 target := node
 
