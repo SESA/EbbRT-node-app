@@ -31,7 +31,11 @@ public:
   static FileSystem &CreateRep(ebbrt::EbbId id);
   static void DestroyRep(ebbrt::EbbId id, FileSystem &rep);
   ebbrt::Future<StatInfo> Stat(const char *path);
+  ebbrt::Future<StatInfo> LStat(const char *path);
+  ebbrt::Future<StatInfo> FStat(int fd);
   ebbrt::Future<std::string> GetCwd();
+  ebbrt::Future<int> Open(const char *path, int flags, int mode);
+  ebbrt::Future<std::string> Read(int fd, size_t length, int64_t offset);
 
 private:
   void ReceiveMessage(ebbrt::Messenger::NetworkId nid,
@@ -41,7 +45,8 @@ private:
   std::mutex lock_;
   uint32_t request_;
   std::unordered_map<uint32_t, ebbrt::Promise<StatInfo> > stat_promises_;
-  std::unordered_map<uint32_t, ebbrt::Promise<std::string> > cwd_promises_;
+  std::unordered_map<uint32_t, ebbrt::Promise<std::string> > string_promises_;
+  std::unordered_map<uint32_t, ebbrt::Promise<int> > open_promises_;
 
   friend ebbrt::Messagable<FileSystem>;
 };

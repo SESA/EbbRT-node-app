@@ -75,7 +75,40 @@ ebbrt::Future<FileSystem::StatInfo> FileSystem::Stat(const char *path) {
   auto request_builder = builder.initRequest();
   auto stat_builder = request_builder.initStatRequest();
   stat_builder.setId(v);
-  stat_builder.setPath(capnp::Text::Reader(path));
+  auto file_builder = stat_builder.initFile();
+  file_builder.setPath(capnp::Text::Reader(path));
+  SendMessage(frontend_id_, ebbrt::AppendHeader(message));
+  return p.GetFuture();
+}
+
+ebbrt::Future<FileSystem::StatInfo> FileSystem::LStat(const char *path) {
+  lock_.lock();
+  auto v = request_++;
+  auto &p = stat_promises_[v];
+  lock_.unlock();
+  ebbrt::IOBufMessageBuilder message;
+  auto builder = message.initRoot<filesystem::Message>();
+  auto request_builder = builder.initRequest();
+  auto stat_builder = request_builder.initStatRequest();
+  stat_builder.setId(v);
+  auto file_builder = stat_builder.initFile();
+  file_builder.setLpath(capnp::Text::Reader(path));
+  SendMessage(frontend_id_, ebbrt::AppendHeader(message));
+  return p.GetFuture();
+}
+
+ebbrt::Future<FileSystem::StatInfo> FileSystem::FStat(int fd) {
+  lock_.lock();
+  auto v = request_++;
+  auto &p = stat_promises_[v];
+  lock_.unlock();
+  ebbrt::IOBufMessageBuilder message;
+  auto builder = message.initRoot<filesystem::Message>();
+  auto request_builder = builder.initRequest();
+  auto stat_builder = request_builder.initStatRequest();
+  stat_builder.setId(v);
+  auto file_builder = stat_builder.initFile();
+  file_builder.setFd(fd);
   SendMessage(frontend_id_, ebbrt::AppendHeader(message));
   return p.GetFuture();
 }
@@ -83,13 +116,48 @@ ebbrt::Future<FileSystem::StatInfo> FileSystem::Stat(const char *path) {
 ebbrt::Future<std::string> FileSystem::GetCwd() {
   lock_.lock();
   auto v = request_++;
-  auto &p = cwd_promises_[v];
+  auto &p = string_promises_[v];
   lock_.unlock();
   ebbrt::IOBufMessageBuilder message;
   auto builder = message.initRoot<filesystem::Message>();
   auto request_builder = builder.initRequest();
   auto get_cwd_builder = request_builder.initGetCwdRequest();
   get_cwd_builder.setId(v);
+  SendMessage(frontend_id_, ebbrt::AppendHeader(message));
+  return p.GetFuture();
+}
+
+ebbrt::Future<int> FileSystem::Open(const char *path, int flags, int mode) {
+  lock_.lock();
+  auto v = request_++;
+  auto &p = open_promises_[v];
+  lock_.unlock();
+  ebbrt::IOBufMessageBuilder message;
+  auto builder = message.initRoot<filesystem::Message>();
+  auto request_builder = builder.initRequest();
+  auto open_builder = request_builder.initOpenRequest();
+  open_builder.setId(v);
+  open_builder.setPath(capnp::Text::Reader(path));
+  open_builder.setFlags(flags);
+  open_builder.setMode(mode);
+  SendMessage(frontend_id_, ebbrt::AppendHeader(message));
+  return p.GetFuture();
+}
+
+ebbrt::Future<std::string> FileSystem::Read(int fd, size_t length,
+                                            int64_t offset) {
+  lock_.lock();
+  auto v = request_++;
+  auto &p = string_promises_[v];
+  lock_.unlock();
+  ebbrt::IOBufMessageBuilder message;
+  auto builder = message.initRoot<filesystem::Message>();
+  auto request_builder = builder.initRequest();
+  auto read_builder = request_builder.initReadRequest();
+  read_builder.setId(v);
+  read_builder.setFd(fd);
+  read_builder.setLength(length);
+  read_builder.setOffset(offset);
   SendMessage(frontend_id_, ebbrt::AppendHeader(message));
   return p.GetFuture();
 }
@@ -110,10 +178,30 @@ void FileSystem::ReceiveMessage(ebbrt::Messenger::NetworkId nid,
       auto stat_request = request.getStatRequest();
       // TODO(dschatz): do this on a separate thread
       struct stat buf;
-      std::cout << "Stat: " << stat_request.getPath().cStr() << std::endl;
-      auto ret = stat(stat_request.getPath().cStr(), &buf);
-      if (ret != 0)
-        throw std::runtime_error("stat failed");
+      auto file_reader = stat_request.getFile();
+      switch (file_reader.which()) {
+      case filesystem::StatRequest::File::Which::PATH: {
+        std::cout << "stat: " << file_reader.getPath().cStr() << std::endl;
+        auto ret = stat(file_reader.getPath().cStr(), &buf);
+        if (ret != 0)
+          throw std::runtime_error("stat failed");
+        break;
+      }
+      case filesystem::StatRequest::File::Which::LPATH: {
+        std::cout << "lstat: " << file_reader.getLpath().cStr() << std::endl;
+        auto ret = lstat(file_reader.getLpath().cStr(), &buf);
+        if (ret != 0)
+          throw std::runtime_error("lstat failed");
+        break;
+      }
+      case filesystem::StatRequest::File::Which::FD: {
+        std::cout << "fstat: " << file_reader.getFd() << std::endl;
+        auto ret = fstat(file_reader.getFd(), &buf);
+        if (ret != 0)
+          throw std::runtime_error("fstat failed");
+        break;
+      }
+      }
       ebbrt::IOBufMessageBuilder send_message;
       auto send_builder = send_message.initRoot<filesystem::Message>();
       auto reply_builder = send_builder.initReply();
@@ -148,13 +236,54 @@ void FileSystem::ReceiveMessage(ebbrt::Messenger::NetworkId nid,
       SendMessage(nid, ebbrt::AppendHeader(send_message));
       break;
     }
+    case filesystem::Request::Which::OPEN_REQUEST: {
+      auto open_request = request.getOpenRequest();
+      std::cout << "open: " << open_request.getPath().cStr() << std::endl;
+      auto ret = open(open_request.getPath().cStr(), open_request.getFlags(),
+                      open_request.getMode());
+      if (ret == -1)
+        throw std::runtime_error("open failed");
+      ebbrt::IOBufMessageBuilder send_message;
+      auto send_builder = send_message.initRoot<filesystem::Message>();
+      auto reply_builder = send_builder.initReply();
+      auto open_reply_builder = reply_builder.initOpenReply();
+      open_reply_builder.setId(open_request.getId());
+      open_reply_builder.setFd(ret);
+      SendMessage(nid, ebbrt::AppendHeader(send_message));
+      break;
+    }
+    case filesystem::Request::Which::READ_REQUEST: {
+      auto read_request = request.getReadRequest();
+      auto fd = read_request.getFd();
+      std::cout << "read: " << fd << std::endl;
+      auto length = read_request.getLength();
+      auto buf = new capnp::byte[length];
+      auto offset = read_request.getOffset();
+      ssize_t ret;
+      if (offset < 0) {
+        ret = read(fd, buf, length);
+      } else {
+        ret = pread(fd, buf, length, offset);
+      }
+      if (ret == -1)
+        throw std::runtime_error("read failed");
+      ebbrt::IOBufMessageBuilder send_message;
+      auto send_builder = send_message.initRoot<filesystem::Message>();
+      auto reply_builder = send_builder.initReply();
+      auto read_reply_builder = reply_builder.initReadReply();
+      read_reply_builder.setId(read_request.getId());
+      read_reply_builder.setData(capnp::Data::Reader(buf, length));
+      delete[] buf;
+      SendMessage(nid, ebbrt::AppendHeader(send_message));
+      break;
+    }
     }
 #endif
     break;
   }
   case filesystem::Message::Which::REPLY: {
     auto reply = message.getReply();
-    switch(reply.which()) {
+    switch (reply.which()) {
     case filesystem::Reply::Which::STAT_REPLY: {
       auto stat_reply = reply.getStatReply();
       StatInfo sinfo;
@@ -181,10 +310,33 @@ void FileSystem::ReceiveMessage(ebbrt::Messenger::NetworkId nid,
       auto get_cwd_reply = reply.getGetCwdReply();
       auto id = get_cwd_reply.getId();
       std::lock_guard<std::mutex> lock(lock_);
-      auto it = cwd_promises_.find(id);
-      assert(it != cwd_promises_.end());
+      auto it = string_promises_.find(id);
+      assert(it != string_promises_.end());
       it->second.SetValue(std::string(get_cwd_reply.getCwd().cStr()));
-      cwd_promises_.erase(it);
+      string_promises_.erase(it);
+      break;
+    }
+    case filesystem::Reply::Which::OPEN_REPLY: {
+      auto open_reply = reply.getOpenReply();
+      auto id = open_reply.getId();
+      std::lock_guard<std::mutex> lock(lock_);
+      auto it = open_promises_.find(id);
+      assert(it != open_promises_.end());
+      it->second.SetValue(open_reply.getFd());
+      open_promises_.erase(it);
+      break;
+    }
+    case filesystem::Reply::Which::READ_REPLY: {
+      auto read_reply = reply.getReadReply();
+      auto id = read_reply.getId();
+      auto data_reader = read_reply.getData();
+      auto str =
+          std::string(reinterpret_cast<const char *>(data_reader.begin()),
+                      data_reader.size());
+      std::lock_guard<std::mutex> lock(lock_);
+      auto it = string_promises_.find(id);
+      assert(it != string_promises_.end());
+      it->second.SetValue(std::move(str));
       break;
     }
     }
