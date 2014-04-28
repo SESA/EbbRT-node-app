@@ -181,21 +181,18 @@ void FileSystem::ReceiveMessage(ebbrt::Messenger::NetworkId nid,
       auto file_reader = stat_request.getFile();
       switch (file_reader.which()) {
       case filesystem::StatRequest::File::Which::PATH: {
-        std::cout << "stat: " << file_reader.getPath().cStr() << std::endl;
         auto ret = stat(file_reader.getPath().cStr(), &buf);
         if (ret != 0)
           throw std::runtime_error("stat failed");
         break;
       }
       case filesystem::StatRequest::File::Which::LPATH: {
-        std::cout << "lstat: " << file_reader.getLpath().cStr() << std::endl;
         auto ret = lstat(file_reader.getLpath().cStr(), &buf);
         if (ret != 0)
           throw std::runtime_error("lstat failed");
         break;
       }
       case filesystem::StatRequest::File::Which::FD: {
-        std::cout << "fstat: " << file_reader.getFd() << std::endl;
         auto ret = fstat(file_reader.getFd(), &buf);
         if (ret != 0)
           throw std::runtime_error("fstat failed");
@@ -238,7 +235,6 @@ void FileSystem::ReceiveMessage(ebbrt::Messenger::NetworkId nid,
     }
     case filesystem::Request::Which::OPEN_REQUEST: {
       auto open_request = request.getOpenRequest();
-      std::cout << "open: " << open_request.getPath().cStr() << std::endl;
       auto ret = open(open_request.getPath().cStr(), open_request.getFlags(),
                       open_request.getMode());
       if (ret == -1)
@@ -255,7 +251,6 @@ void FileSystem::ReceiveMessage(ebbrt::Messenger::NetworkId nid,
     case filesystem::Request::Which::READ_REQUEST: {
       auto read_request = request.getReadRequest();
       auto fd = read_request.getFd();
-      std::cout << "read: " << fd << std::endl;
       auto length = read_request.getLength();
       auto buf = new capnp::byte[length];
       auto offset = read_request.getOffset();
