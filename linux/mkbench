@@ -1,0 +1,114 @@
+#!/bin/bash
+
+export NODEREPO=EbbRT-node;
+
+[[ -z $NO_CLEAN ]] && {
+  if [[ -a build ]]; then
+    mv build build.$$.old
+  fi
+  mkdir build
+}
+
+[[ -z $NO_CHECKOUT ]] &&
+(
+  cd build  || exit -1
+  git clone https://github.com/SESA/${NODEREPO}
+  cd EbbRT-node
+  git checkout -b linux cc56c62
+)
+
+[[ -z $NO_BUILD ]] && 
+(
+  cd build/${NODEREPO} || exit -1
+  ./configure --without-snapshot
+  make -j8
+)
+
+dir=$(pwd)/build/app
+exec=$(pwd)/build/${NODEREPO}/node
+benchscript=$(pwd)/bench.js
+
+if [[ ! -a $exec ]]; then
+  echo "ERROR: no executable $exec" > /dev/stderr
+  exit -1
+fi
+
+linuxrel=$(uname -r)
+
+if [[ -a $dir ]]; then
+  echo "ERROR: $dir already exists please remove to rebuild" > /dev/stderr
+  exit -1
+fi
+
+mkdir $dir
+
+kernel=/boot/vmlinuz-${linuxrel}
+baseinitrd=/boot/initrd.img-${linuxrel}
+if [[ ! -a $kernel ]]; then
+  echo "ERROR: can't file KERNEL:$kernel" > /dev/stderr
+  exit -1
+fi
+
+if [[ ! -a $baseinitrd ]]; then
+  echo "ERROR: can't file base INITRD:$baseinitrd" > /dev/stderr
+  exit -1
+fi
+
+sudo cp $kernel $dir
+
+mkdir $dir/root
+(cd $dir/root; gunzip -c $baseinitrd | cpio -id)
+
+LD_TRACE_LOADED_OBJECTS=1 $exec > $dir/deps 
+
+files="$exec 
+$benchscript"
+cat $dir/deps | while read line; do line=${line#*/}; echo /${line%% *}; done | grep -v 'linux-vdso.so' > $dir/files
+echo "$files" >> $dir/files
+
+mkdir $dir/root/linux
+
+cp -aL -t $dir/root/linux $(cat $dir/files)
+
+cat  >$dir/root/linux/init <<EOF 
+#!/bin/sh
+
+[ -d /dev ] || mkdir -m 0755 /dev
+[ -d /root ] || mkdir -m 0700 /root
+[ -d /sys ] || mkdir /sys
+[ -d /proc ] || mkdir /proc
+[ -d /tmp ] || mkdir /tmp
+mkdir -p /var/lock
+mount -t sysfs -o nodev,noexec,nosuid sysfs /sys
+mount -t proc -o nodev,noexec,nosuid proc /proc
+# Some things don't work properly without /etc/mtab.
+ln -sf /proc/mounts /etc/mtab
+
+grep -q '\<quiet\>' /proc/cmdline || echo "Loading, please wait..."
+
+# Note that this only becomes /dev on the real filesystem if udev's scripts
+# are used; which they will be, but it's worth pointing out
+if ! mount -t devtmpfs -o mode=0755 udev /dev; then
+	echo "W: devtmpfs not available, falling back to tmpfs for /dev"
+	mount -t tmpfs -o mode=0755 udev /dev
+	[ -e /dev/console ] || mknod -m 0600 /dev/console c 5 1
+	[ -e /dev/null ] || mknod /dev/null c 1 3
+fi
+mkdir /dev/pts
+mount -t devpts -o noexec,nosuid,gid=5,mode=0620 devpts /dev/pts || true
+mount -t tmpfs -o "noexec,nosuid,size=10%,mode=0755" tmpfs /run
+
+#echo  "init: EbbRT"
+
+export LD_LIBRARY_PATH=/linux
+/linux/node < /linux/bench.js
+/bin/poweroff -n
+EOF
+
+chmod +x $dir/root/linux/init
+
+(cd $dir/root;find . | cpio --create --format='newc' | gzip -c > $dir/linux_initrd.img.$linuxrel)
+
+echo "console=ttyS0 quiet rdinit=/linux/init" > $dir/cmdlineargs
+
+echo "$dir: contains bootable linux appliance (kernel and initrd along with command line arguments)"
