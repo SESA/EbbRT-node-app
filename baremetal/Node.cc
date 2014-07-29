@@ -8,6 +8,9 @@
 
 #include <ebbrt/Debug.h>
 
+#define BM_ONLY
+
+#include "../NodeScript.h"
 #include "../CmdLineArgs.h"
 #include "../FileSystem.h"
 #include "../StaticEbbIds.h"
@@ -18,10 +21,15 @@ extern "C" int main(int argc, char **argv);
 
 void AppMain() {
   putenv(const_cast<char *>("TZ=EST5EDT4,M3.2.0,M11.1.0"));
+#ifndef BM_ONLY
   node_fs_ebb = ebbrt::EbbRef<FileSystem>(kFileSystemId);
   auto cmdlineargs = ebbrt::EbbRef<CmdLineArgs>(kCmdLineArgsId);
   auto cmd_argc = cmdlineargs->argc();
   auto cmd_argv = cmdlineargs->argv();
   auto i = main(cmd_argc, cmd_argv);
+#else
+  const char *argv[] = { "node" };
+  auto i = main(1, const_cast<char **>(argv));
+#endif
   ebbrt::kprintf("Return Code: %d\n", i);
 }
