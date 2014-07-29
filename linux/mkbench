@@ -55,6 +55,7 @@ if [[ ! -a $baseinitrd ]]; then
 fi
 
 sudo cp $kernel $dir
+sudo chmod 744 $dir/$(basename $kernel)
 
 mkdir $dir/root
 (cd $dir/root; gunzip -c $baseinitrd | cpio -id)
