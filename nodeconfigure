@@ -1,1 +1,1 @@
-CXX=~/Work/SESA/EbbRT/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-g++ CC=~/Work/SESA/EbbRT/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-gcc ./configure --without-npm --without-ssl --without-snapshot --dest-cpu=x64 --dest-os=ebbrt --debug
+CXX=$EBBRT_SRCDIR/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-g++ CC=$EBBRT_SRCDIR/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-gcc ./configure --without-npm --without-ssl --without-snapshot --dest-cpu=x64 --dest-os=ebbrt
