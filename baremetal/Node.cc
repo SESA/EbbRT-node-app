@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <ebbrt/Acpi.h>
 #include <ebbrt/Debug.h>
 
 #define BM_ONLY
@@ -32,4 +33,5 @@ void AppMain() {
   auto i = main(1, const_cast<char **>(argv));
 #endif
   ebbrt::kprintf("Return Code: %d\n", i);
+  ebbrt::acpi::PowerOff();
 }

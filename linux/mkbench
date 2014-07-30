@@ -20,7 +20,7 @@ export NODEREPO=EbbRT-node;
 [[ -z $NO_BUILD ]] && 
 (
   cd build/${NODEREPO} || exit -1
-  ./configure --without-snapshot
+  ./configure --without-npm --without-ssl --without-snapshot
   make -j8
 )
 
