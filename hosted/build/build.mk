@@ -14,3 +14,6 @@ target := node
 EBBRT_APP_VPATH := $(MYDIR)/..:$(MYDIR)/../..
 
 include $(abspath $(EBBRT_SRCDIR)/apps/ebbrthosted.mk)
+
+.PHONY
+bench:

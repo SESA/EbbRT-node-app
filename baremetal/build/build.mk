@@ -2,12 +2,19 @@ MYDIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 NODE_PATH := $(MYDIR)/../../node
 
+ifeq ($(NODE_BENCH),1)
+EBBRT_TARGET := bench
+EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtbenchcfg.h)
+EBBRT_OPTFLAGS += -O2 -DBM_ONLY
+else
 EBBRT_TARGET := node
+EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtcfg.h)
+endif
+
 EBBRT_APP_CAPNPS := CmdLineArgs.capnp FileSystem.capnp
 EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o FileSystem.o
 EBBRT_APP_DEPS := build-node
 EBBRT_APP_VPATH := $(abspath $(MYDIR)../):$(abspath $(MYDIR)../../)
-EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtcfg.h)
 
 EBBRT_PHONY := build-node
 
@@ -25,4 +32,5 @@ EBBRT_APP_LINK := \
 include $(abspath $(EBBRT_SRCDIR)/apps/ebbrtbaremetal.mk)
 
 build-node:
+	cd $(NODE_PATH); CXX=${EBBRT_SRCDIR}/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-g++ CC=${EBBRT_SRCDIR}/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-gcc ./configure --without-npm --without-ssl --without-snapshot --dest-cpu=x64 --dest-os=ebbrt
 	$(MAKE) -C $(NODE_PATH)/out BUILDTYPE=$(EBBRT_BUILDTYPE)

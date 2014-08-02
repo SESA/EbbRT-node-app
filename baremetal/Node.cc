@@ -9,8 +9,6 @@
 #include <ebbrt/Acpi.h>
 #include <ebbrt/Debug.h>
 
-#define BM_ONLY
-
 #include "../NodeScript.h"
 #include "../CmdLineArgs.h"
 #include "../FileSystem.h"
