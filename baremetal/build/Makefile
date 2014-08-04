@@ -10,10 +10,6 @@ all:
 bench.dtb: bench.dts
 	dtc -I dts -O dtb -o bench.dtb ../bench.dts
 
-.PHONY: bench
-
-bench: hello fullbench nullbench badbench goodbench
-
 
 fullbench.cc: fullbench.js
 	xxd -i ../../fullbench.js | sed 's/_*fullbench_js/node_script/g' > fullbench.cc

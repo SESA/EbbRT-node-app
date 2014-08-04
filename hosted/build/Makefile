@@ -6,6 +6,12 @@ all:
 	$(MAKE) -C Debug
 	$(MAKE) -C Release
 
-.PHONY: bench
+.PHONY: fullbench nullbench goodbench badbench hello
 
-bench: 
+hello:
+fullbench:
+goodbench:
+badbench:
+nullbench:
+
+
