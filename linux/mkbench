@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#set -x
 export NODEREPO=EbbRT-node;
 
 [[ -z $NO_CLEAN ]] && {
@@ -26,7 +26,8 @@ export NODEREPO=EbbRT-node;
 
 dir=$(pwd)/build/app
 exec=$(pwd)/build/${NODEREPO}/node
-benchscript=$(pwd)/bench.js
+scripts="fullbench nullbench goodbench badbench hello_world"
+
 
 if [[ ! -a $exec ]]; then
   echo "ERROR: no executable $exec" > /dev/stderr
@@ -35,47 +36,50 @@ fi
 
 linuxrel=$(uname -r)
 
-if [[ -a $dir ]]; then
-  echo "ERROR: $dir already exists please remove to rebuild" > /dev/stderr
-  exit -1
-fi
+for scr in $scripts
+do
+    d=${dir}.$scr
+    if [[ -a $d ]]; then
+	echo "ERROR: $d already exists please remove to rebuild" > /dev/stderr
+	exit -1
+    fi
 
-mkdir $dir
+    mkdir $d
 
-kernel=/boot/vmlinuz-${linuxrel}
-baseinitrd=/boot/initrd.img-${linuxrel}
-if [[ ! -a $kernel ]]; then
-  echo "ERROR: can't file KERNEL:$kernel" > /dev/stderr
-  exit -1
-fi
+    kernel=/boot/vmlinuz-${linuxrel}
+    baseinitrd=/boot/initrd.img-${linuxrel}
+    if [[ ! -a $kernel ]]; then
+	echo "ERROR: can't file KERNEL:$kernel" > /dev/stderr
+	exit -1
+    fi
 
-if [[ ! -a $baseinitrd ]]; then
-  echo "ERROR: can't file base INITRD:$baseinitrd" > /dev/stderr
-  exit -1
-fi
+    if [[ ! -a $baseinitrd ]]; then
+	echo "ERROR: can't file base INITRD:$baseinitrd" > /dev/stderr
+	exit -1
+    fi
 
-if ! cp $kernel $dir; then
-  echo "ERROR: cp $kernel $dir failed"
-  exit -1
-fi
+    if ! cp $kernel $d; then
+	echo "ERROR: cp $kernel $dir failed"
+	exit -1
+    fi
 
-chmod 744 $dir/$(basename $kernel)
+    chmod 744 $d/$(basename $kernel)
 
-mkdir $dir/root
-(cd $dir/root; gunzip -c $baseinitrd | cpio -id)
+    mkdir $d/root
+    (cd $d/root; gunzip -c $baseinitrd | cpio -id)
 
-LD_TRACE_LOADED_OBJECTS=1 $exec > $dir/deps 
+    LD_TRACE_LOADED_OBJECTS=1 $exec > $d/deps 
 
-files="$exec 
-$benchscript"
-cat $dir/deps | while read line; do line=${line#*/}; echo /${line%% *}; done | grep -v 'linux-vdso.so' > $dir/files
-echo "$files" >> $dir/files
+    files="$exec 
+$(pwd)/../${scr}.js"
+    cat $d/deps | while read line; do line=${line#*/}; echo /${line%% *}; done | grep -v 'linux-vdso.so' > $d/files
+    echo "$files" >> $d/files
 
-mkdir $dir/root/linux
+    mkdir $d/root/linux
 
-cp -aL -t $dir/root/linux $(cat $dir/files)
+    cp -aL -t $d/root/linux $(cat $d/files)
 
-cat  >$dir/root/linux/init <<EOF 
+    cat  >$d/root/linux/init <<EOF 
 #!/bin/sh
 
 [ -d /dev ] || mkdir -m 0755 /dev
@@ -106,14 +110,15 @@ mount -t tmpfs -o "noexec,nosuid,size=10%,mode=0755" tmpfs /run
 #echo  "init: EbbRT"
 
 export LD_LIBRARY_PATH=/linux
-/linux/node < /linux/bench.js
+/linux/node < /linux/${scr}.js
 /bin/poweroff -n
 EOF
 
-chmod +x $dir/root/linux/init
+    chmod +x $d/root/linux/init
 
-(cd $dir/root;find . | cpio --create --format='newc' | gzip -c > $dir/linux_initrd.img.$linuxrel)
+    (cd $d/root;find . | cpio --create --format='newc' | gzip -c > $d/${scr}_linux_initrd.img.$linuxrel)
 
-echo "console=ttyS0 quiet rdinit=/linux/init" > $dir/cmdlineargs
+    echo "console=ttyS0 quiet rdinit=/linux/init" > $d/cmdlineargs
 
-echo "$dir: contains bootable linux appliance (kernel and initrd along with command line arguments)"
+    echo "$d: contains bootable linux appliance (kernel and initrd along with command line arguments)"
+done
