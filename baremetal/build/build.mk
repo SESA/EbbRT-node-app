@@ -9,7 +9,7 @@ EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o FileSystem.o $(NODE_SCRIPT).o
 $(info NODE_BENCH set to $(NODE_BENCH) NODE_SCRIPT set to $(NODE_SCRIPT) : EBBRT_TARGET now set to $(EBBRT_TARGET) : EBBRT_APP_OBJECTS now set to $(EBBRT_APP_OBJECTS) )
 EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtbenchcfg.h)
 #EBBRT_OPTFLAGS += -O2 -DBM_ONLY -D$(NODE_SCRIPT)
-#EBBRT_OPTFLAGS += -O2 -DBM_ONLY
+EBBRT_OPTFLAGS += -O4 -DBM_ONLY
 else
 EBBRT_TARGET := node
 EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o FileSystem.o
