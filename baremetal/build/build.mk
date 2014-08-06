@@ -8,7 +8,11 @@ EBBRT_TARGET := $(NODE_SCRIPT)
 EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o FileSystem.o $(NODE_SCRIPT).o
 $(info NODE_BENCH set to $(NODE_BENCH) NODE_SCRIPT set to $(NODE_SCRIPT) : EBBRT_TARGET now set to $(EBBRT_TARGET) : EBBRT_APP_OBJECTS now set to $(EBBRT_APP_OBJECTS) )
 EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtbenchcfg.h)
+ifeq ($(PROFILE_EBBRT_NODE),1)
+EBBRT_APP_INCLUDES := -DBM_ONLY -D__JA_V8_PROFILE_HACK__
+else
 EBBRT_APP_INCLUDES := -DBM_ONLY 
+endif
 else
 EBBRT_TARGET := node
 EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o FileSystem.o
@@ -34,6 +38,12 @@ EBBRT_APP_LINK := \
 
 include $(abspath $(EBBRT_SRCDIR)/apps/ebbrtbaremetal.mk)
 
+ifeq ($(PROFILE_EBBRT_NODE),1)
+build-node:
+	cd $(NODE_PATH); CXX='${EBBRT_SRCDIR}/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-g++ -D__JA_V8_PROFILE_HACK__' CC=${EBBRT_SRCDIR}/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-gcc ./configure --without-npm --without-ssl --without-snapshot --dest-cpu=x64 --dest-os=ebbrt
+	$(MAKE) -C $(NODE_PATH)/out BUILDTYPE=$(EBBRT_BUILDTYPE)
+else
 build-node:
 	cd $(NODE_PATH); CXX=${EBBRT_SRCDIR}/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-g++ CC=${EBBRT_SRCDIR}/baremetal/ext/toolchain/bin/x86_64-pc-ebbrt-gcc ./configure --without-npm --without-ssl --without-snapshot --dest-cpu=x64 --dest-os=ebbrt
 	$(MAKE) -C $(NODE_PATH)/out BUILDTYPE=$(EBBRT_BUILDTYPE)
+endif

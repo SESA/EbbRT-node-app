@@ -26,8 +26,17 @@ void AppMain() {
   auto cmd_argv = cmdlineargs->argv();
   auto i = main(cmd_argc, cmd_argv);
 #else
+  int argc = 0;
+#ifndef __JA_V8_PROFILE_HACK__
   const char *argv[] = { "node" };
-  auto i = main(1, const_cast<char **>(argv));
+  argc+=1;
+#else
+  // "--trace" full trace of execution  produces a lot of info
+  const char *argv[] = { "node", "--logfile", "-", "--log_code" }; 
+  argc+=4;
+#endif
+  auto i = main(argc, const_cast<char **>(argv));
+
 #endif
   ebbrt::kprintf("Return Code: %d\n", i);
   ebbrt::acpi::PowerOff();
