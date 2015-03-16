@@ -20,7 +20,8 @@ extern "C" int main(int argc, char **argv);
 void AppMain() {
   putenv(const_cast<char *>("TZ=EST5EDT4,M3.2.0,M11.1.0"));
 #ifndef BM_ONLY
-  node_fs_ebb = ebbrt::EbbRef<FileSystem>(kFileSystemId);
+  node_fs_ebb =
+      FileSystem::Create(&FileSystem::CreateRep(kFileSystemId), kFileSystemId);
   auto cmdlineargs = ebbrt::EbbRef<CmdLineArgs>(kCmdLineArgsId);
   auto cmd_argc = cmdlineargs->argc();
   auto cmd_argv = cmdlineargs->argv();
@@ -29,11 +30,11 @@ void AppMain() {
   int argc = 0;
 #ifndef __JA_V8_PROFILE_HACK__
   const char *argv[] = { "node" };
-  argc+=1;
+  argc += 1;
 #else
   // "--trace" full trace of execution  produces a lot of info
-  const char *argv[] = { "node", "--logfile", "-", "--log_code" }; 
-  argc+=4;
+  const char *argv[] = { "node", "--logfile", "-", "--log_code" };
+  argc += 4;
 #endif
   auto i = main(argc, const_cast<char **>(argv));
 

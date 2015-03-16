@@ -33,10 +33,12 @@ int main(int argc, char **argv) {
         .Then([bindir](ebbrt::Future<ebbrt::EbbRef<CmdLineArgs> > f) {
           f.Get();
           // TODO(dschatz): Don't chain these futures, instead when_all them
-          FileSystem::CreateWithId(kFileSystemId)
-              .Then([bindir](ebbrt::Future<ebbrt::EbbRef<FileSystem> > f) {
+          FileSystem::PreCreate(kFileSystemId)
+              .Then([bindir](ebbrt::Future<void> f) {
                 f.Get();
-                ebbrt::node_allocator->AllocateNode(bindir.string());
+                FileSystem::Create(&FileSystem::CreateRep(kFileSystemId),
+                                   kFileSystemId);
+                ebbrt::node_allocator->AllocateNode(bindir.string(), 1, 1);
               });
         });
   }
