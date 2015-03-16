@@ -260,7 +260,7 @@ void FileSystem::ReceiveMessage(ebbrt::Messenger::NetworkId nid,
       } else {
         ret = pread(fd, buf, length, offset);
       }
-      std::cout << "length = " << length << "read ret = " << ret << std::endl;
+      std::cout << "length = " << length << " read ret = " << ret << std::endl;
       if (ret == -1)
         throw std::runtime_error("read failed");
       ebbrt::IOBufMessageBuilder send_message;
