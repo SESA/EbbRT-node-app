@@ -78,6 +78,16 @@ splaydbg: bench.dtb splay.cc
 
 #### combinations of  benchmarks
 
+octane2.cc: ../../octane2.js
+	xxd -i ../../octane2.js | sed 's/_*octane2_js/node_script/g' > octane2.cc
+
+octane2: bench.dtb octane2.cc
+	NODE_BENCH=1 NODE_SCRIPT="octane2" $(MAKE) -C Release
+
+.PHONY: octane2dbg
+octane2dbg: bench.dtb octane2.cc
+	NODE_BENCH=1 NODE_SCRIPT="octane2" $(MAKE) -C Debug
+
 fullbench.cc: ../../fullbench.js
 	xxd -i ../../fullbench.js | sed 's/_*fullbench_js/node_script/g' > fullbench.cc
 
@@ -87,6 +97,16 @@ fullbench: bench.dtb fullbench.cc
 .PHONY: fullbenchdbg
 fullbenchdbg: bench.dtb fullbench.cc
 	NODE_BENCH=1 NODE_SCRIPT="fullbench" $(MAKE) -C Debug
+
+fullbench-quiet.cc: ../../fullbench-quiet.js
+	xxd -i ../../fullbench-quiet.js | sed 's/_*fullbench_quiet_js/node_script/g' > fullbench-quiet.cc
+
+fullbench-quiet: bench.dtb fullbench-quiet.cc
+	NODE_BENCH=1 NODE_SCRIPT="fullbench-quiet" $(MAKE) -C Release
+
+.PHONY: fullbench-quietdbg
+fullbench-quietdbg: bench.dtb fullbench-quiet.cc
+	NODE_BENCH=1 NODE_SCRIPT="fullbench-quiet" $(MAKE) -C Debug
 
 nullbench.cc: ../../nullbench.js
 	xxd -i ../../nullbench.js | sed 's/_*nullbench_js/node_script/g' > nullbench.cc
@@ -129,8 +149,18 @@ hello: bench.dtb hello.cc
 hellodbg: bench.dtb hello.cc
 	NODE_BENCH=1 NODE_SCRIPT="hello" $(MAKE) -C Debug
 
+hello_http.cc: ../../hello_http.js
+	xxd -i ../../hello_http.js | sed 's/_*hello_http_js/node_script/g' > hello_http.cc
+
+hello_http: bench.dtb hello_http.cc
+	NODE_BENCH=1 NODE_NET_CFG=1 NODE_SCRIPT="hello_http" $(MAKE) -C Release
+
+.PHONY: hello_httpdbg
+hello_httpdbg: bench.dtb hello_http.cc
+	NODE_BENCH=1 NODE_NET_CFG=1 NODE_SCRIPT="hello_http" $(MAKE) -C Debug
+
 clean::
-	-$(RM) $(wildcard bench.dtb)  $(wildcard *script.h)  $(wildcard hello.cc fullbench.cc nullbench.cc goodbench.cc badbench.cc) 
+	-$(RM) $(wildcard bench.dtb)  $(wildcard *script.h)  $(wildcard hello.cc hello_http.cc fullbench.cc nullbench.cc goodbench.cc badbench.cc octane2.cc) 
 	$(MAKE) -C Debug clean
 	$(MAKE) -C Release clean
 	NODE_BENCH=1 NODE_SCRIPT="crypto" $(MAKE) -C Release clean
@@ -153,6 +183,12 @@ clean::
 	NODE_BENCH=1 NODE_SCRIPT="nullbench" $(MAKE) -C Release clean
 	NODE_BENCH=1 NODE_SCRIPT="fullbench" $(MAKE) -C Debug clean
 	NODE_BENCH=1 NODE_SCRIPT="fullbench" $(MAKE) -C Release clean
+	NODE_BENCH=1 NODE_SCRIPT="fullbench-quiet" $(MAKE) -C Debug clean
+	NODE_BENCH=1 NODE_SCRIPT="fullbench-quiet" $(MAKE) -C Release clean
+	NODE_BENCH=1 NODE_SCRIPT="hello_http" $(MAKE) -C Debug clean
+	NODE_BENCH=1 NODE_SCRIPT="hello_http" $(MAKE) -C Release clean
+	NODE_BENCH=1 NODE_SCRIPT="octane2" $(MAKE) -C Debug clean
+	NODE_BENCH=1 NODE_SCRIPT="octane2" $(MAKE) -C Release clean
 	NODE_BENCH=1 NODE_SCRIPT="badbench" $(MAKE) -C Debug clean
 	NODE_BENCH=1 NODE_SCRIPT="badbench" $(MAKE) -C Release clean
 	NODE_BENCH=1 NODE_SCRIPT="goodbench" $(MAKE) -C Debug clean

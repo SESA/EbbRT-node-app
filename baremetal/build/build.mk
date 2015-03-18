@@ -7,7 +7,11 @@ ifeq ($(NODE_BENCH),1)
 EBBRT_TARGET := $(NODE_SCRIPT)
 EBBRT_APP_OBJECTS := Node.o CmdLineArgs.o FileSystem.o $(NODE_SCRIPT).o
 $(info NODE_BENCH set to $(NODE_BENCH) NODE_SCRIPT set to $(NODE_SCRIPT) : EBBRT_TARGET now set to $(EBBRT_TARGET) : EBBRT_APP_OBJECTS now set to $(EBBRT_APP_OBJECTS) )
+ifeq ($(NODE_NET_CFG),1)
+EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtbenchnetcfg.h)
+else
 EBBRT_CONFIG := $(abspath $(MYDIR)../ebbrtbenchcfg.h)
+endif
 ifeq ($(PROFILE_EBBRT_NODE),1)
 EBBRT_APP_INCLUDES := -DBM_ONLY -D__JA_V8_PROFILE_HACK__
 else
