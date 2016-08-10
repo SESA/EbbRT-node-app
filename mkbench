@@ -1,1 +1,0 @@
-cat benchlist | while read b;do echo "make $@ -j8 $b"; make $@ -j8 $b; done

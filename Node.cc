@@ -13,9 +13,13 @@
 #include <ebbrt/NodeAllocator.h>
 #include <ebbrt/Runtime.h>
 
-#include "../CmdLineArgs.h"
-#include "../FileSystem.h"
-#include "../StaticEbbIds.h"
+#include <ebbrt-cmdline/CmdLineArgs.h>
+#include <ebbrt-filesystem/FileSystem.h>
+
+enum : ebbrt::EbbId {
+  kCmdLineArgsId = ebbrt::kFirstStaticUserId,
+  kFileSystemId
+};
 
 int main(int argc, char **argv) {
   auto bindir = boost::filesystem::system_complete(argv[0]).parent_path() /
@@ -30,7 +34,7 @@ int main(int argc, char **argv) {
     sig.async_wait([&c](const boost::system::error_code &ec,
                         int signal_number) { c.io_service_.stop(); });
     CmdLineArgs::Create(argc, argv, kCmdLineArgsId)
-        .Then([bindir](ebbrt::Future<ebbrt::EbbRef<CmdLineArgs> > f) {
+        .Then([bindir](ebbrt::Future<ebbrt::EbbRef<CmdLineArgs>> f) {
           f.Get();
           // TODO(dschatz): Don't chain these futures, instead when_all them
           FileSystem::PreCreate(kFileSystemId)
