@@ -30,6 +30,10 @@ hosted: $(BUILD_DIR)/Makefile
 
 native: $(NATIVE_DIR)/node.elf32
 
+linux:
+	$(CD) $(NODE_DIR) && ./configure --dest-os=linux --without-ssl \
+        --without-npm --without-snapshot --dest-cpu=x64 \
+        $(NODE_CONFIG_FLAGS) && $(MAKE)
 $(BUILD_DIR)/Makefile: | $(BUILD_DIR)
 	$(CD) $(BUILD_DIR) && $(CMAKE) -DCMAKE_AR=gcc-ar \
 	-DCMAKE_RANLIB=gcc-ranlib -DCMAKE_BUILD_TYPE=Release $(MYDIR)
