@@ -13,6 +13,7 @@ BUILD_DIR ?= $(MYDIR)/build
 NATIVE_DIR := $(BUILD_DIR)/bm
 
 NODE_DIR := $(MYDIR)/node
+NODE_CONFIG_FLAGS ?=
 
 ifndef EBBRT_SYSROOT
 $(error EBBRT_SYSROOT is undefined)
@@ -22,6 +23,7 @@ all: hosted native
 
 clean:
 	-$(RM) -r $(BUILD_DIR)
+	$(MAKE) -C $(NODE_DIR) distclean
 
 hosted: $(BUILD_DIR)/Makefile
 	$(MAKE) -C $(BUILD_DIR)
@@ -42,7 +44,7 @@ $(NODE_DIR)/node:
 	$(CD) $(NODE_DIR) && CC=$(EBBRT_SYSROOT)/usr/bin/x86_64-pc-ebbrt-gcc \
 	CXX=$(EBBRT_SYSROOT)/usr/bin/x86_64-pc-ebbrt-g++ ./configure \
 	--dest-os=ebbrt --without-ssl --without-npm --without-snapshot \
-	--dest-cpu=x64 && $(MAKE)
+	--dest-cpu=x64 $(NODE_CONFIG_FLAGS) && $(MAKE)
 
 $(NATIVE_DIR)/node.elf: $(NODE_DIR)/node | $(NATIVE_DIR)
 	$(CP) $< $@
