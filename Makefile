@@ -15,10 +15,6 @@ NATIVE_DIR := $(BUILD_DIR)/bm
 NODE_DIR := $(MYDIR)/node
 NODE_CONFIG_FLAGS ?=
 
-ifndef EBBRT_SYSROOT
-$(error EBBRT_SYSROOT is undefined)
-endif
-
 all: hosted native
 
 clean:
@@ -44,7 +40,12 @@ $(BUILD_DIR):
 $(NATIVE_DIR): | $(BUILD_DIR)
 	$(MKDIR) $@
 
-$(NODE_DIR)/node:
+check-env:
+ifndef EBBRT_SYSROOT
+	$(error EBBRT_SYSROOT is undefined)
+endif
+
+$(NODE_DIR)/node: check-env
 	$(CD) $(NODE_DIR) && CC=$(EBBRT_SYSROOT)/usr/bin/x86_64-pc-ebbrt-gcc \
 	CXX=$(EBBRT_SYSROOT)/usr/bin/x86_64-pc-ebbrt-g++ ./configure \
 	--dest-os=ebbrt --without-ssl --without-npm --without-snapshot \
@@ -59,4 +60,4 @@ $(NATIVE_DIR)/node.elf: $(NODE_DIR)/node | $(NATIVE_DIR)
 %.elf32: %.elf.stripped
 	$(OBJCOPY) -O elf32-i386 $< $@
 
-.PHONY: all clean hosted native
+.PHONY: all check-env clean hosted linux native
