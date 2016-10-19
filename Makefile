@@ -15,6 +15,10 @@ NATIVE_DIR := $(BUILD_DIR)/bm
 NODE_DIR := $(MYDIR)/node
 NODE_CONFIG_FLAGS ?=
 
+ifndef CMAKE_PREFIX_PATH
+$(error CMAKE_PREFIX_PATH is undefined)
+endif
+
 all: hosted native
 
 clean:
@@ -32,7 +36,8 @@ linux:
         $(NODE_CONFIG_FLAGS) && $(MAKE)
 $(BUILD_DIR)/Makefile: | $(BUILD_DIR)
 	$(CD) $(BUILD_DIR) && $(CMAKE) -DCMAKE_AR=gcc-ar \
-	-DCMAKE_RANLIB=gcc-ranlib -DCMAKE_BUILD_TYPE=Release $(MYDIR)
+	-DCMAKE_RANLIB=gcc-ranlib -DCMAKE_PREFIX_PATH=$(CMAKE_PREFIX_PATH) \
+	-DCMAKE_BUILD_TYPE=Release $(MYDIR)
 
 $(BUILD_DIR):
 	$(MKDIR) $@
