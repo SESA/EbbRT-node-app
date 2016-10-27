@@ -14,12 +14,12 @@ EbbRT source directory: `export EBBRT_SRCDIR=~/EbbRT`
 Set the `EBBRT_SYSROOT` environment variable to point to EbbRT native toolchain, assuming 
 it was installed at following location:
 
-`export EBBRT_SYSROOT=$EBBRT_SRCDIR/toolchain/sysroot`
+`export EBBRT_SYSROOT=~/sysroot/native`
 
 Set the `CMAKE_PREFIX_PATH` environment variable to point to EbbRT hosted library, assuming 
 it was installed at following location:
 
-`export EBBRT_SYSROOT=$EBBRT_SRCDIR/hosted/usr`
+`export CMAKE_PREFIX_PATH=~/sysroot/hosted`
 
 To build native and hosted node.js application:
 
